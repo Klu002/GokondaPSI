@@ -244,3 +244,16 @@ bool CryptoDriver::HMAC_verify(SecByteBlock key, std::string ciphertext,
     return false;
   }
 }
+
+/**
+ * @brief Generates a SHA-256 hash of msg.
+ */
+std::string CryptoDriver::hash(std::string msg) {
+  SHA256 hash;
+  std::string encodedHex;
+  HexEncoder encoder(new StringSink(encodedHex));
+
+  // Compute hash
+  StringSource(msg, true, new HashFilter(hash, new StringSink(encodedHex)));
+  return encodedHex;
+}

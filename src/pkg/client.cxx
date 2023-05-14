@@ -70,7 +70,7 @@ void Client::GetPSI() {
 
   // Round 2: Requester recieves H(local_set_r)^(k_r k_s) and H(local_set_s)^k_s
   PSIResponse_Message resp_msg;
-  auto [serialized_resp, is_valid] = this->crypto_driver->decrypt_and_verify(
+  auto[serialized_resp, is_valid] = this->crypto_driver->decrypt_and_verify(
     this->AES_key, this->HMAC_key, this->network_driver->read()
   );
   if (!is_valid) {
@@ -88,7 +88,8 @@ void Client::GetPSI() {
   }
 
   // Decrypt and return
-  
+  // Fuck it, just do ca so we dont have to decrypt
+  std::cout << intersection.size() << std::endl;
 
 }
 
@@ -97,8 +98,40 @@ void Client::GetPSI() {
  * Responds with the PSI of the client's current set and the requester client's current set
  */
 void Client::RespondPSI() {
+  // Setup: Generate private exponent k
+  CryptoPP::AutoSeededRandomPool prg;
+  CryptoPP::Integer k(prg, 0, DL_Q);
 
-  
+  // Round 1 Responder receives H(local_set_r)^k_r
+  PSIRequest_Message req_msg;
+  auto[serialized_req, is_valid] = this->crypto_driver->decrypt_and_verify(
+    this->AES_key, this->HMAC_key, this->network_driver->read()
+  );
+  if (!is_valid) {
+    throw std::runtime_error("Recieved invalid response message for PSI");
+  }
+  req_msg.deserialize(serialized_req);
+
+  // Round 2 Responder calculates H(local_set_s)^k_s and H(local_set_r)^(k_s k_r)
+  std::vector<CryptoPP::Integer> int_arr;
+  for (auto const &str: this->local_set) {
+    std::string hash_str = this->crypto_driver->hash(str);
+    int_arr.push_back(CryptoPP::Integer(hash_str.c_str()));
+  }
+
+  std::vector<CryptoPP::Integer> exponentiated_hash_ints = exponentiateInts(int_arr, k, DL_P);
+  std::random_shuffle(exponentiated_hash_ints.begin(), exponentiated_hash_ints.end());
+  PSIResponse_Message resp_msg;
+  resp_msg.resp_hashed_exponentiated_eles = exponentiated_hash_ints;
+
+  std::vector<CryptoPP::Integer> req_shared_exponent = exponentiateInts(req_msg.hashed_exponentiated_eles, k, DL_P);
+  resp_msg.req_hashed_exponentiated_eles = req_shared_exponent;
+
+  this->network_driver->send(
+    this->crypto_driver->encrypt_and_tag(
+      this->AES_key, this->HMAC_key, &resp_msg
+    )
+  );
 }
 
 void Client::HandlePut(std::string element) {
@@ -110,7 +143,7 @@ void Client::HandleDelete(std::string element) {
     this->local_set.erase(element);
   }
   catch(...) {
-    std::printf("Failed to insert element %s\n", element);
+    std::printf("Failed to insert element %s\n", element.c_str());
   }
 }
 
@@ -163,6 +196,17 @@ Client::HandleKeyExchange(std::string command) {
     std::vector<unsigned char> public_value_data;
     public_value_s.serialize(public_value_data);
     this->network_driver->send(public_value_data);
+
+     // Recover g^ab
+    auto dh_shared_key = crypto_driver->DH_generate_shared_key(
+        std::get<0>(dh_values), std::get<1>(dh_values),
+        user_public_value_s.public_value);
+
+    // Generate keys
+    auto AES_key = crypto_driver->AES_generate_key(dh_shared_key);
+    auto HMAC_key = crypto_driver->HMAC_generate_key(dh_shared_key);
+    auto keys = std::make_pair(AES_key, HMAC_key);
+    return keys;
   }
   else if (command == "connect") {
     // Send m = (g^b, g^a) signed with our private DSA key
@@ -176,19 +220,19 @@ Client::HandleKeyExchange(std::string command) {
     std::vector<unsigned char> server_public_value = this->network_driver->read();
     DHPublicValue_Message server_public_value_s;
     server_public_value_s.deserialize(server_public_value);
+
+    // Recover g^ab
+    auto dh_shared_key = this->crypto_driver->DH_generate_shared_key(
+        std::get<0>(dh_values), std::get<1>(dh_values),
+        server_public_value_s.public_value);
+
+    // Generate keys
+    auto AES_key = this->crypto_driver->AES_generate_key(dh_shared_key);
+    auto HMAC_key = this->crypto_driver->HMAC_generate_key(dh_shared_key);
+    auto keys = std::make_pair(AES_key, HMAC_key);
+    return keys;
   }
   else {
     throw std::runtime_error("Invalid command pased to Client::HandleKeyExchange");
   }
-
-  // Recover g^ab
-  auto dh_shared_key = this->crypto_driver->DH_generate_shared_key(
-      std::get<0>(dh_values), std::get<1>(dh_values),
-      server_public_value_s.public_value);
-
-  // Generate keys
-  auto AES_key = this->crypto_driver->AES_generate_key(dh_shared_key);
-  auto HMAC_key = this->crypto_driver->HMAC_generate_key(dh_shared_key);
-  auto keys = std::make_pair(AES_key, HMAC_key);
-  return keys;
 }

@@ -16,6 +16,8 @@
 #include "../../include/drivers/cli_driver.hpp"
 #include "../../include/drivers/crypto_driver.hpp"
 #include "../../include/drivers/network_driver.hpp"
+#include "../../include/drivers/repl_driver.hpp"
+#include <unordered_set>
 
 class Client {
 public:

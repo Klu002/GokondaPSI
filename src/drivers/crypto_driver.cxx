@@ -51,31 +51,31 @@ CryptoDriver::encrypt_and_tag(SecByteBlock AES_key, SecByteBlock HMAC_key,
 /**
  * Same encrypt and tag but with context.
  */
-std::vector<unsigned char>
-CryptoDriver::encrypt_and_tag(SecByteBlock AES_key, SecByteBlock HMAC_key,
-                              SerializableWithContext *message) {
-  // Serialize given message.
-  std::vector<unsigned char> plaintext;
-  message->serialize(plaintext);
+// std::vector<unsigned char>
+// CryptoDriver::encrypt_and_tag(SecByteBlock AES_key, SecByteBlock HMAC_key,
+//                               SerializableWithContext *message) {
+//   // Serialize given message.
+//   std::vector<unsigned char> plaintext;
+//   message->serialize(plaintext);
 
-  // Encrypt the payload, generate iv to hmac.
-  std::pair<std::string, SecByteBlock> encrypted =
-      this->AES_encrypt(AES_key, chvec2str(plaintext));
-  std::string to_tag = std::string((const char *)encrypted.second.data(),
-                                   encrypted.second.size()) +
-                       encrypted.first;
+//   // Encrypt the payload, generate iv to hmac.
+//   std::pair<std::string, SecByteBlock> encrypted =
+//       this->AES_encrypt(AES_key, chvec2str(plaintext));
+//   std::string to_tag = std::string((const char *)encrypted.second.data(),
+//                                    encrypted.second.size()) +
+//                        encrypted.first;
 
-  // Generate HMAC on the payload.
-  HMACTagged_Wrapper msg;
-  msg.payload = str2chvec(encrypted.first);
-  msg.iv = encrypted.second;
-  msg.mac = this->HMAC_generate(HMAC_key, to_tag);
+//   // Generate HMAC on the payload.
+//   HMACTagged_Wrapper msg;
+//   msg.payload = str2chvec(encrypted.first);
+//   msg.iv = encrypted.second;
+//   msg.mac = this->HMAC_generate(HMAC_key, to_tag);
 
-  // Serialize the HMAC and payload.
-  std::vector<unsigned char> payload_data;
-  msg.serialize(payload_data);
-  return payload_data;
-}
+//   // Serialize the HMAC and payload.
+//   std::vector<unsigned char> payload_data;
+//   msg.serialize(payload_data);
+//   return payload_data;
+// }
 
 /**
  * @brief Verifies that the tagged HMAC is valid on the ciphertext and decrypts

@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "seal/seal.h"
+// #include "seal/seal.h"
 
 #include <crypto++/cryptlib.h>
 #include <crypto++/filters.h>
@@ -39,16 +39,15 @@ void print_key_as_hex(CryptoPP::SecByteBlock block);
 
 // Splitter.
 std::vector<std::string> string_split(std::string str, char delimiter);
-
 // BGV conversions
-std::vector<unsigned char> params_to_chvec(seal::EncryptionParameters params);
-seal::EncryptionParameters chvec_to_params(std::vector<unsigned char> data);
-std::vector<unsigned char> pubkey_to_chvec(seal::PublicKey pk);
-seal::PublicKey chvec_to_pubkey(seal::SEALContext ctx,
-                                std::vector<unsigned char> data);
-std::vector<unsigned char> ciphertext_to_chvec(seal::Ciphertext ct);
-seal::Ciphertext chvec_to_ciphertext(seal::SEALContext ctx,
-                                     std::vector<unsigned char> data);
-std::vector<unsigned char> relinkeys_to_chvec(seal::RelinKeys rk);
-seal::RelinKeys chvec_to_relinkeys(seal::SEALContext ctx,
-                                   std::vector<unsigned char> data);
+// std::vector<unsigned char> params_to_chvec(seal::EncryptionParameters params);
+// seal::EncryptionParameters chvec_to_params(std::vector<unsigned char> data);
+// std::vector<unsigned char> pubkey_to_chvec(seal::PublicKey pk);
+// seal::PublicKey chvec_to_pubkey(seal::SEALContext ctx,
+//                                 std::vector<unsigned char> data);
+// std::vector<unsigned char> ciphertext_to_chvec(seal::Ciphertext ct);
+// seal::Ciphertext chvec_to_ciphertext(seal::SEALContext ctx,
+//                                      std::vector<unsigned char> data);
+// std::vector<unsigned char> relinkeys_to_chvec(seal::RelinKeys rk);
+// seal::RelinKeys chvec_to_relinkeys(seal::SEALContext ctx,
+//                                    std::vector<unsigned char> data);

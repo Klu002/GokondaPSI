@@ -155,8 +155,90 @@ int DHPublicValue_Message::deserialize(std::vector<unsigned char> &data) {
 // ================================================
 // MESSAGES
 // ================================================
+
+/**
+ * serialize UserToServer_Query_Message.
+ */
+void UserToServer_Query_Message::serialize(std::vector<unsigned char> &data) {
+  // Add message type.
+  data.push_back((char)MessageType::UserToServer_Query_Message);
+
+  // Add fields.
+  put_string(chvec2str(relinkeys_to_chvec(this->rks)), data);
+
+  // Add number of ciphertexts
+  int idx = data.size();
+  data.resize(idx + sizeof(size_t));
+  size_t query_size = this->query.size();
+  std::memcpy(&data[idx], &query_size, sizeof(size_t));
+
+  // Put the ciphertexts in.
+  for (int i = 0; i < query_size; i++)
+    put_string(chvec2str(ciphertext_to_chvec(this->query[i])), data);
+}
+
+/**
+ * deserialize UserToServer_Query_Message.
+ */
+int UserToServer_Query_Message::deserialize(std::vector<unsigned char> &data,
+                                            seal::SEALContext ctx) {
+  // Check correct message type.
+  assert(data[0] == MessageType::UserToServer_Query_Message);
+
+  // Get fields.
+  std::string rks_str;
+  int n = 1;
+  n += get_string(&rks_str, data, n);
+  this->rks = chvec_to_relinkeys(ctx, str2chvec(rks_str));
+
+  // Get number of ciphertexts.
+  size_t query_size;
+  std::memcpy(&query_size, &data[n], sizeof(size_t));
+  n += sizeof(size_t);
+
+  // Get each ciphertext.
+  for (int i = 0; i < query_size; i++) {
+    std::string ciphertext_str;
+    n += get_string(&ciphertext_str, data, n);
+    this->query.push_back(chvec_to_ciphertext(ctx, str2chvec(ciphertext_str)));
+  }
+  return n;
+}
+
+/**
+ * serialize UserToServer_Query_Message.
+ */
+void ServerToUser_Response_Message::serialize(
+    std::vector<unsigned char> &data) {
+  // Add message type.
+  data.push_back((char)MessageType::ServerToUser_Response_Message);
+
+  // Add fields.
+  put_string(chvec2str(ciphertext_to_chvec(this->response)), data);
+}
+
+/**
+ * deserialize UserToServer_Query_Message.
+ */
+int ServerToUser_Response_Message::deserialize(std::vector<unsigned char> &data,
+                                               seal::SEALContext ctx) {
+  // Check correct message type.
+  assert(data[0] == MessageType::ServerToUser_Response_Message);
+
+  // Get fields.
+  std::string response_str;
+  int n = 1;
+  n += get_string(&response_str, data, n);
+  this->response = chvec_to_ciphertext(ctx, str2chvec(response_str));
+  return n;
+}
+
+// ================================================
+// MESSAGES
+// ================================================
 void PSIRequest_Message::serialize(std::vector<unsigned char> &data) {
   data.push_back((char)MessageType::PSIRequest_Message);
+  // std::cout << data[0] << std::endl;
   
   // Put length of element vector
   int idx = data.size();
@@ -170,7 +252,8 @@ void PSIRequest_Message::serialize(std::vector<unsigned char> &data) {
 }
 
 int PSIRequest_Message::deserialize(std::vector<unsigned char> &data) {
-  assert(data[0] == MessageType::PSIRequest_Message);
+  // assert(data[0] == MessageType::PSIRequest_Message);
+  // std::cout << data[0] << std::endl;
 
   // Get length
   size_t num_eles;
@@ -209,7 +292,7 @@ void PSIResponse_Message::serialize(std::vector<unsigned char> &data) {
 }
 
 int PSIResponse_Message::deserialize(std::vector<unsigned char> &data) {
-  assert(data[0] == MessageType::PSIRequest_Message);
+  assert(data[0] == MessageType::PSIResponse_Message);
 
   // Get length of requester vector
   size_t num_eles_req;
@@ -234,84 +317,3 @@ int PSIResponse_Message::deserialize(std::vector<unsigned char> &data) {
   
   return n;
 }
-
-// ================================================
-// MESSAGES
-// ================================================
-
-// /**
-//  * serialize UserToServer_Query_Message.
-//  */
-// void UserToServer_Query_Message::serialize(std::vector<unsigned char> &data) {
-//   // Add message type.
-//   data.push_back((char)MessageType::UserToServer_Query_Message);
-
-//   // Add fields.
-//   put_string(chvec2str(relinkeys_to_chvec(this->rks)), data);
-
-//   // Add number of ciphertexts
-//   int idx = data.size();
-//   data.resize(idx + sizeof(size_t));
-//   size_t query_size = this->query.size();
-//   std::memcpy(&data[idx], &query_size, sizeof(size_t));
-
-//   // Put the ciphertexts in.
-//   for (int i = 0; i < query_size; i++)
-//     put_string(chvec2str(ciphertext_to_chvec(this->query[i])), data);
-// }
-
-/**
- * deserialize UserToServer_Query_Message.
- */
-// int UserToServer_Query_Message::deserialize(std::vector<unsigned char> &data,
-//                                             seal::SEALContext ctx) {
-//   // Check correct message type.
-//   assert(data[0] == MessageType::UserToServer_Query_Message);
-
-//   // Get fields.
-//   std::string rks_str;
-//   int n = 1;
-//   n += get_string(&rks_str, data, n);
-//   this->rks = chvec_to_relinkeys(ctx, str2chvec(rks_str));
-
-//   // Get number of ciphertexts.
-//   size_t query_size;
-//   std::memcpy(&query_size, &data[n], sizeof(size_t));
-//   n += sizeof(size_t);
-
-//   // Get each ciphertext.
-//   for (int i = 0; i < query_size; i++) {
-//     std::string ciphertext_str;
-//     n += get_string(&ciphertext_str, data, n);
-//     this->query.push_back(chvec_to_ciphertext(ctx, str2chvec(ciphertext_str)));
-//   }
-//   return n;
-// }
-
-// /**
-//  * serialize UserToServer_Query_Message.
-//  */
-// void ServerToUser_Response_Message::serialize(
-//     std::vector<unsigned char> &data) {
-//   // Add message type.
-//   data.push_back((char)MessageType::ServerToUser_Response_Message);
-
-//   // Add fields.
-//   put_string(chvec2str(ciphertext_to_chvec(this->response)), data);
-// }
-
-// /**
-//  * deserialize UserToServer_Query_Message.
-//  */
-// int ServerToUser_Response_Message::deserialize(std::vector<unsigned char> &data,
-//                                                seal::SEALContext ctx) {
-//   // Check correct message type.
-//   assert(data[0] == MessageType::ServerToUser_Response_Message);
-
-//   // Get fields.
-//   std::string response_str;
-//   int n = 1;
-//   n += get_string(&response_str, data, n);
-//   this->response = chvec_to_ciphertext(ctx, str2chvec(response_str));
-//   return n;
-// }

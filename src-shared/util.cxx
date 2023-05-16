@@ -117,39 +117,53 @@ std::vector<std::string> string_split(std::string str, char delimiter) {
 /**
  * Convert ciphertext to chvec
  */
-// std::vector<unsigned char> ciphertext_to_chvec(seal::Ciphertext ct) {
-//   std::stringstream str;
-//   ct.save(str);
-//   return str2chvec(str.str());
-// }
+std::vector<unsigned char> ciphertext_to_chvec(seal::Ciphertext ct) {
+  std::stringstream str;
+  ct.save(str);
+  return str2chvec(str.str());
+}
 
-// /**
-//  * Convert chvec to ciphertext
-//  */
-// seal::Ciphertext chvec_to_ciphertext(seal::SEALContext ctx,
-//                                      std::vector<unsigned char> data) {
-//   std::stringstream str(chvec2str(data));
-//   seal::Ciphertext ct;
-//   ct.load(ctx, str);
-//   return ct;
-// }
+/**
+ * Convert chvec to ciphertext
+ */
+seal::Ciphertext chvec_to_ciphertext(seal::SEALContext ctx,
+                                     std::vector<unsigned char> data) {
+  std::stringstream str(chvec2str(data));
+  seal::Ciphertext ct;
+  ct.load(ctx, str);
+  return ct;
+}
 
-// /**
-//  * Convert RelinKeys to chvec
-//  */
-// std::vector<unsigned char> relinkeys_to_chvec(seal::RelinKeys rk) {
-//   std::stringstream str;
-//   rk.save(str);
-//   return str2chvec(str.str());
-// }
+/**
+ * Convert RelinKeys to chvec
+ */
+std::vector<unsigned char> relinkeys_to_chvec(seal::RelinKeys rk) {
+  std::stringstream str;
+  rk.save(str);
+  return str2chvec(str.str());
+}
 
-// /**
-//  * Convert chvec to RelinKeys
-//  */
-// seal::RelinKeys chvec_to_relinkeys(seal::SEALContext ctx,
-//                                    std::vector<unsigned char> data) {
-//   std::stringstream str(chvec2str(data));
-//   seal::RelinKeys rk;
-//   rk.load(ctx, str);
-//   return rk;
-// }
+/**
+ * Convert chvec to RelinKeys
+ */
+seal::RelinKeys chvec_to_relinkeys(seal::SEALContext ctx,
+                                   std::vector<unsigned char> data) {
+  std::stringstream str(chvec2str(data));
+  seal::RelinKeys rk;
+  rk.load(ctx, str);
+  return rk;
+}
+
+std::vector<CryptoPP::Integer> exponentiateInts(
+  std::vector<CryptoPP::Integer> ints,
+  CryptoPP::Integer exponent,
+  CryptoPP::Integer mod) {
+  std::vector<CryptoPP::Integer> exponentiated_ints;
+  for (auto &i: ints) {
+    exponentiated_ints.push_back(
+      CryptoPP::ModularExponentiation(i, exponent, mod)
+    );
+  }
+
+  return exponentiated_ints;
+}

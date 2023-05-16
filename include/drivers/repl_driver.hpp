@@ -11,7 +11,8 @@
 #include "../../include-shared/constants.hpp"
 #include "../../include-shared/logger.hpp"
 #include "../../include/drivers/cli_driver.hpp"
-#include "../../include/pkg/client.hpp"
+#include "../../include/pkg/agent.hpp"
+#include "../../include/pkg/cloud.hpp"
 
 template <class T> class REPLDriver {
 public:
@@ -26,4 +27,5 @@ private:
   std::map<std::string, void (T::*)(std::string line)> actions;
   std::map<std::string, std::string> guides;
 };
-template class REPLDriver<Client>;
+template class REPLDriver<CloudClient>;
+template class REPLDriver<AgentClient>;
